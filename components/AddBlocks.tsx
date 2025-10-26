@@ -2,8 +2,10 @@ import { Popover, Button, Modal, Upload, message } from 'antd';
 import { GalleryThumbnails, Plus, SplitIcon, Text, Video } from 'lucide-react';
 import React, { useState } from 'react';
 import Editor from './Editor';
-import { TextBlock } from '@/types/blocks';
+import { TextBlock, SplitViewBlock, GalleryBlock } from '@/types/blocks';
 import { useWebsiteStore } from '@/store';
+import SplitViewModal from './SplitViewModal';
+import GalleryEditModal from './GalleryEditModal';
 
 const DESIGN = [
   {
@@ -24,12 +26,11 @@ const DESIGN = [
   },
 ];
 
-import GalleryBlockModal from './GalleryBlockModal';
-
 export const AddBlocks = () => {
   const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
+  const [isSplitViewModalOpen, setIsSplitViewModalOpen] = useState(false);
   const [editorContent, setEditorContent] = useState('');
   // Gallery modal state is now managed in GalleryBlockModal
   const { currentPage, addBlock } = useWebsiteStore();
@@ -49,6 +50,11 @@ export const AddBlocks = () => {
 
   const handleGalleryClick = () => {
     setIsGalleryModalOpen(true);
+    hide();
+  };
+
+  const handleSplitViewClick = () => {
+    setIsSplitViewModalOpen(true);
     hide();
   };
 
@@ -87,7 +93,9 @@ export const AddBlocks = () => {
                       ? handleTextClick
                       : design.text === 'Gallery'
                         ? handleGalleryClick
-                        : hide
+                        : design.text === 'Split view'
+                          ? handleSplitViewClick
+                          : hide
                   }
                   className="flex flex-col items-center gap-2 hover:bg-gray-200 p-4 rounded-lg transition-colors border-none"
                 >
@@ -123,17 +131,15 @@ export const AddBlocks = () => {
       </Modal>
 
       {/* Gallery Block Modal */}
-      <GalleryBlockModal
+      <GalleryEditModal
         open={isGalleryModalOpen}
-        onOk={({ images, layout, columns, gap }) => {
+        title="Add Gallery Block"
+        onOk={({ images }) => {
           if (!currentPage) return;
-          const newBlock = {
+          const newBlock: GalleryBlock = {
             id: crypto.randomUUID(),
-            type: 'gallery' as const,
+            type: 'gallery',
             images,
-            layout,
-            columns,
-            gap,
             order: currentPage.blocks.length || 0,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -142,6 +148,29 @@ export const AddBlocks = () => {
           setIsGalleryModalOpen(false);
         }}
         onCancel={() => setIsGalleryModalOpen(false)}
+      />
+
+      {/* Split-View Block Modal */}
+      <SplitViewModal
+        open={isSplitViewModalOpen}
+        title="Add Split-View Block"
+        onOk={(values) => {
+          if (!currentPage) return;
+          const newBlock: SplitViewBlock = {
+            id: crypto.randomUUID(),
+            type: 'split-view',
+            leftContent: values.leftContent,
+            rightContent: values.rightContent,
+            ratio: values.ratio,
+            verticalAlign: values.verticalAlign,
+            order: currentPage.blocks.length || 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          addBlock(currentPage.id, newBlock);
+          setIsSplitViewModalOpen(false);
+        }}
+        onCancel={() => setIsSplitViewModalOpen(false)}
       />
     </>
   );

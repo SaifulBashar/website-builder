@@ -4,17 +4,20 @@ import { Button } from 'antd';
 
 interface Props {
   block: TextBlock;
-  onRemove: () => void;
-  onEdit: () => void;
+  onRemove?: () => void;
+  onEdit?: () => void;
+  isPreview?: boolean;
 }
 
-const TextRenderer: React.FC<Props> = ({ block, onRemove, onEdit }) => (
+const TextRenderer: React.FC<Props> = ({ block, onRemove, onEdit, isPreview = false }) => (
   <div>
     <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: block.content || '' }} />
-    <div className="p-4 flex items-center justify-center gap-4">
-      <Button onClick={onRemove}>Remove</Button>
-      <Button onClick={onEdit}>Edit</Button>
-    </div>
+    {!isPreview && onRemove && onEdit && (
+      <div className="p-4 flex items-center justify-center gap-4">
+        <Button onClick={onRemove}>Remove</Button>
+        <Button onClick={onEdit}>Edit</Button>
+      </div>
+    )}
   </div>
 );
 

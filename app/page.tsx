@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { AddBlocks } from '@/components/AddBlocks';
 import { RenderWebPage } from '@/components/RenderWebPage';
+import Preview from '@/components/Preview';
 
 export default function Home() {
   const [collapsed, setCollapsed] = useState(false);
@@ -12,6 +13,7 @@ export default function Home() {
       <Sidebar collapsed={collapsed} onCollapse={setCollapsed} />
       <main className="flex-1 ml-64 overflow-y-auto relative ">
         <RenderWebPage />
+        <Preview />
         <AddBlocks />
       </main>
     </div>
