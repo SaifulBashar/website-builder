@@ -11,8 +11,9 @@ import {
   Home,
   MoreHorizontal,
   Trash,
+  Edit2,
 } from 'lucide-react';
-import { Modal, Input, Button, Popconfirm } from 'antd';
+import { Modal, Input, Button, Popconfirm, Popover } from 'antd';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -20,10 +21,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed = false, onCollapse }: SidebarProps) {
-  const { website, currentPageId, setCurrentPage, addPage, deletePage } = useWebsiteStore();
+  const { website, currentPageId, setCurrentPage, addPage, updatePage, deletePage } =
+    useWebsiteStore();
   const [isAddingPage, setIsAddingPage] = useState(false);
   const [newPageName, setNewPageName] = useState('');
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
+  const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
   const [deletingPageId, setDeletingPageId] = useState<string | null>(null);
 
   const handleAddPage = () => {
@@ -55,6 +59,23 @@ export default function Sidebar({ collapsed = false, onCollapse }: SidebarProps)
   const handleDeletePage = (pageId: string) => {
     deletePage(pageId);
     setDeletingPageId(null);
+  };
+
+  const handleRenamePage = (pageId: string) => {
+    if (renameValue.trim()) {
+      const slug = renameValue.toLowerCase().replace(/\s+/g, '-');
+      updatePage(pageId, {
+        name: renameValue,
+        slug,
+      });
+      setRenamingPageId(null);
+      setRenameValue('');
+    }
+  };
+
+  const openRenamePopover = (pageId: string, currentName: string) => {
+    setRenamingPageId(pageId);
+    setRenameValue(currentName);
   };
 
   return (
@@ -95,26 +116,82 @@ export default function Sidebar({ collapsed = false, onCollapse }: SidebarProps)
 
             {/* Options Menu */}
             {index !== 0 && (
-              <Popconfirm
-                title="Delete Page"
-                description={`Are you sure you want to delete "${page.name}"?`}
-                onConfirm={(e) => {
-                  e?.stopPropagation();
-                  handleDeletePage(page.id);
-                }}
-                onCancel={(e) => e?.stopPropagation()}
-                okText="Delete"
-                cancelText="Cancel"
-                okType="danger"
-              >
-                <Button
-                  type="text"
-                  onClick={(e) => {
-                    e.stopPropagation();
+              <div className="flex items-center gap-1">
+                {/* Rename Button */}
+                <Popover
+                  content={
+                    <div className="w-64">
+                      <Input
+                        placeholder="Enter new page name"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onPressEnter={() => handleRenamePage(page.id)}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2 mt-3">
+                        <Button
+                          size="small"
+                          onClick={() => {
+                            setRenamingPageId(null);
+                            setRenameValue('');
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() => handleRenamePage(page.id)}
+                          disabled={!renameValue.trim()}
+                        >
+                          Rename
+                        </Button>
+                      </div>
+                    </div>
+                  }
+                  title="Rename Page"
+                  trigger="click"
+                  open={renamingPageId === page.id}
+                  onOpenChange={(visible) => {
+                    if (visible) {
+                      openRenamePopover(page.id, page.name);
+                    } else {
+                      setRenamingPageId(null);
+                      setRenameValue('');
+                    }
                   }}
-                  icon={<Trash size={16} color="white" />}
-                />
-              </Popconfirm>
+                >
+                  <Button
+                    type="text"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    icon={<Edit2 size={16} color="white" />}
+                  />
+                </Popover>
+
+                {/* Delete Button */}
+                <Popconfirm
+                  title="Delete Page"
+                  description={`Are you sure you want to delete "${page.name}"?`}
+                  onConfirm={(e) => {
+                    e?.stopPropagation();
+                    handleDeletePage(page.id);
+                  }}
+                  onCancel={(e) => e?.stopPropagation()}
+                  okText="Delete"
+                  cancelText="Cancel"
+                  okType="danger"
+                >
+                  <Button
+                    type="text"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    icon={<Trash size={16} color="white" />}
+                  />
+                </Popconfirm>
+              </div>
             )}
           </div>
         ))}

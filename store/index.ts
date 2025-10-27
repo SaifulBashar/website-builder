@@ -10,6 +10,7 @@ interface WebsiteStore {
   setWebsite: (website: Website) => void;
   setCurrentPage: (pageId: string) => void;
   addPage: (page: Omit<Page, 'id'>) => void;
+  updatePage: (pageId: string, updates: Partial<Omit<Page, 'id'>>) => void;
   deletePage: (pageId: string) => void;
   addBlock: (pageId: string, block: Block) => void;
   updateBlock: (pageId: string, blockId: string, updates: Partial<Block>) => void;
@@ -64,6 +65,24 @@ export const useWebsiteStore = create<WebsiteStore>((set) => ({
           ...state.website,
           pages: [...state.website.pages, newPage],
         },
+      };
+    }),
+
+  updatePage: (pageId, updates) =>
+    set((state) => {
+      if (!state.website) return state;
+      return {
+        ...state,
+        website: {
+          ...state.website,
+          pages: state.website.pages.map((page) =>
+            page.id === pageId ? { ...page, ...updates } : page
+          ),
+        },
+        currentPage:
+          state.currentPageId === pageId
+            ? { ...state.currentPage!, ...updates }
+            : state.currentPage,
       };
     }),
 

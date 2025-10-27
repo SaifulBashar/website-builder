@@ -2,10 +2,11 @@ import { Popover, Button, Modal, Upload, message } from 'antd';
 import { GalleryThumbnails, Plus, SplitIcon, Text, Video } from 'lucide-react';
 import React, { useState } from 'react';
 import Editor from './Editor';
-import { TextBlock, SplitViewBlock, GalleryBlock } from '@/types/blocks';
+import { TextBlock, SplitViewBlock, GalleryBlock, VideoBlock } from '@/types/blocks';
 import { useWebsiteStore } from '@/store';
 import SplitViewModal from './SplitViewModal';
 import GalleryEditModal from './GalleryEditModal';
+import VideoEditModal from './VideoEditModal';
 
 const DESIGN = [
   {
@@ -31,6 +32,7 @@ export const AddBlocks = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
   const [isSplitViewModalOpen, setIsSplitViewModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [editorContent, setEditorContent] = useState('');
   // Gallery modal state is now managed in GalleryBlockModal
   const { currentPage, addBlock } = useWebsiteStore();
@@ -55,6 +57,11 @@ export const AddBlocks = () => {
 
   const handleSplitViewClick = () => {
     setIsSplitViewModalOpen(true);
+    hide();
+  };
+
+  const handleVideoClick = () => {
+    setIsVideoModalOpen(true);
     hide();
   };
 
@@ -95,7 +102,9 @@ export const AddBlocks = () => {
                         ? handleGalleryClick
                         : design.text === 'Split view'
                           ? handleSplitViewClick
-                          : hide
+                          : design.text === 'Video'
+                            ? handleVideoClick
+                            : hide
                   }
                   className="flex flex-col items-center gap-2 hover:bg-gray-200 p-4 rounded-lg transition-colors border-none"
                 >
@@ -171,6 +180,34 @@ export const AddBlocks = () => {
           setIsSplitViewModalOpen(false);
         }}
         onCancel={() => setIsSplitViewModalOpen(false)}
+      />
+
+      {/* Video Block Modal */}
+      <VideoEditModal
+        open={isVideoModalOpen}
+        title="Add Video Block"
+        editingBlock={null}
+        onOk={(values) => {
+          if (!currentPage) return;
+          const newBlock: VideoBlock = {
+            id: crypto.randomUUID(),
+            type: 'video',
+            url: values.url,
+            autoplay: values.autoplay,
+            loop: values.loop,
+            muted: values.muted,
+            styles: {
+              width: values.width,
+              height: values.height,
+            },
+            order: currentPage.blocks.length || 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          addBlock(currentPage.id, newBlock);
+          setIsVideoModalOpen(false);
+        }}
+        onCancel={() => setIsVideoModalOpen(false)}
       />
     </>
   );

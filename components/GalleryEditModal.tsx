@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Input, Button, Form, Space, Card } from 'antd';
+import React, { useMemo } from 'react';
+import { Modal, Input, Button, Card } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { GalleryBlock } from '@/types/blocks';
+import { Formik, Form as FormikForm, FieldArray, FormikErrors } from 'formik';
 
 interface GalleryEditModalProps {
   open: boolean;
@@ -25,173 +26,182 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
   editingBlock,
   title = 'Edit Gallery Block',
 }) => {
-  const [form] = Form.useForm();
-  const [images, setImages] = useState<
-    {
-      id: string;
-      url: string;
-      alt?: string;
-      caption?: string;
-    }[]
-  >([{ id: crypto.randomUUID(), url: '', alt: '', caption: '' }]);
+  type ImageItem = { id: string; url: string; alt?: string; caption?: string };
+  type GalleryFormValues = { images: ImageItem[] };
 
-  // Set initial values when editing
-  useEffect(() => {
+  const defaultImage = (): ImageItem => ({
+    id: crypto.randomUUID(),
+    url: '',
+    alt: '',
+    caption: '',
+  });
+
+  const initialValues: GalleryFormValues = useMemo(() => {
     if (editingBlock && open) {
       const blockImages = editingBlock.images || [];
       const normalizedImages = blockImages.map((img) => ({
-        ...img,
-        alt: img.alt || '',
-        caption: img.caption || '',
+        id: (img as any).id || crypto.randomUUID(),
+        url: (img as any).url || '',
+        alt: (img as any).alt || '',
+        caption: (img as any).caption || '',
       }));
-      setImages(
-        normalizedImages.length > 0
-          ? normalizedImages
-          : [{ id: crypto.randomUUID(), url: '', alt: '', caption: '' }]
-      );
-      form.setFieldsValue({ images: normalizedImages });
-    } else if (open && !editingBlock) {
-      // Reset for new blocks
-      const defaultImages = [{ id: crypto.randomUUID(), url: '', alt: '', caption: '' }];
-      setImages(defaultImages);
-      form.setFieldsValue({ images: defaultImages });
+      return { images: normalizedImages.length > 0 ? normalizedImages : [defaultImage()] };
     }
-  }, [editingBlock, open, form]);
+    if (open && !editingBlock) {
+      return { images: [defaultImage()] };
+    }
+    return { images: [defaultImage()] };
+  }, [editingBlock, open]);
 
-  const handleOk = async () => {
-    try {
-      // Validate form fields
-      await form.validateFields();
-
-      // Filter out empty images from our state
-      const validImages = images.filter((img) => img.url && img.url.trim() !== '');
-
-      if (validImages.length === 0) {
-        return; // Don't submit if no valid images
+  const validate = (values: GalleryFormValues) => {
+    const errors: FormikErrors<GalleryFormValues> & { images?: Array<Record<string, string>> } = {};
+    if (!values.images || values.images.length === 0) {
+      errors.images = [{ url: 'Please enter image URL' }];
+    } else {
+      const imageErrors = values.images.map((img) => {
+        const e: Record<string, string> = {};
+        if (!img.url || img.url.trim() === '') {
+          e.url = 'Please enter image URL';
+        }
+        return e;
+      });
+      if (imageErrors.some((e) => Object.keys(e).length > 0)) {
+        errors.images = imageErrors;
       }
-
-      onOk({ images: validImages });
-    } catch (error) {
-      console.error('Form validation failed:', error);
     }
+    return errors;
   };
 
-  const handleCancel = () => {
-    form.resetFields();
-    setImages([{ id: crypto.randomUUID(), url: '', alt: '', caption: '' }]);
-    onCancel();
-  };
-
-  const addImage = () => {
-    const newImages = [...images, { id: crypto.randomUUID(), url: '', alt: '', caption: '' }];
-    setImages(newImages);
-    form.setFieldsValue({ images: newImages });
-  };
-
-  const removeImage = (index: number) => {
-    if (images.length > 1) {
-      const newImages = images.filter((_, i) => i !== index);
-      setImages(newImages);
-      form.setFieldsValue({ images: newImages });
-    }
-  };
-
-  const updateImage = (index: number, field: string, value: string) => {
-    const newImages = [...images];
-    newImages[index] = { ...newImages[index], [field]: value };
-    setImages(newImages);
-    // Update the specific form field
-    form.setFieldValue(['images', index, field], value);
+  const onSubmit = (values: GalleryFormValues) => {
+    const validImages = values.images.filter((img) => img.url && img.url.trim() !== '');
+    if (validImages.length === 0) return;
+    onOk({ images: validImages });
   };
 
   return (
-    <Modal
-      title={title}
-      open={open}
-      onOk={handleOk}
-      onCancel={handleCancel}
-      width={900}
-      okText={editingBlock ? 'Update' : 'Add'}
+    <Formik
+      initialValues={initialValues}
+      enableReinitialize
+      validate={validate}
+      onSubmit={onSubmit}
     >
-      <Form form={form} layout="vertical">
-        <div className="space-y-4">
-          {images.map((image, index) => (
-            <Card
-              key={image.id}
-              size="small"
-              title={`Image ${index + 1}`}
-              extra={
-                images.length > 1 && (
-                  <Button
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => removeImage(index)}
-                  />
-                )
-              }
-            >
-              <div className="grid grid-cols-1 gap-3">
-                <Form.Item
-                  name={['images', index, 'url']}
-                  label="Image URL"
-                  rules={[{ required: true, message: 'Please enter image URL' }]}
-                >
-                  <Input
-                    placeholder="Enter image URL"
-                    value={image.url}
-                    onChange={(e) => updateImage(index, 'url', e.target.value)}
-                  />
-                </Form.Item>
+      {({ values, errors, touched, setFieldValue, handleBlur, resetForm, submitForm }) => (
+        <Modal
+          title={title}
+          open={open}
+          onOk={submitForm}
+          onCancel={() => {
+            resetForm();
+            onCancel();
+          }}
+          width={900}
+          okText={editingBlock ? 'Update' : 'Add'}
+        >
+          <FormikForm>
+            <FieldArray name="images">
+              {({ push, remove }) => (
+                <div className="space-y-4">
+                  {values.images.map((image, index) => (
+                    <Card
+                      key={image.id}
+                      size="small"
+                      title={`Image ${index + 1}`}
+                      extra={
+                        values.images.length > 1 && (
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => remove(index)}
+                          />
+                        )
+                      }
+                    >
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Image URL</label>
+                          <Input
+                            name={`images[${index}].url`}
+                            placeholder="Enter image URL"
+                            value={image.url}
+                            onChange={(e) => setFieldValue(`images[${index}].url`, e.target.value)}
+                            onBlur={handleBlur}
+                          />
+                          {touched.images &&
+                            (touched.images as any)[index]?.url &&
+                            (errors.images as any)?.[index]?.url && (
+                              <div className="text-red-500 text-sm mt-1">
+                                {(errors.images as any)[index].url}
+                              </div>
+                            )}
+                        </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <Form.Item name={['images', index, 'alt']} label="Alt Text">
-                    <Input
-                      placeholder="Alt text for accessibility"
-                      value={image.alt}
-                      onChange={(e) => updateImage(index, 'alt', e.target.value)}
-                    />
-                  </Form.Item>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Alt Text</label>
+                            <Input
+                              name={`images[${index}].alt`}
+                              placeholder="Alt text for accessibility"
+                              value={image.alt}
+                              onChange={(e) =>
+                                setFieldValue(`images[${index}].alt`, e.target.value)
+                              }
+                              onBlur={handleBlur}
+                            />
+                          </div>
 
-                  <Form.Item name={['images', index, 'caption']} label="Caption">
-                    <Input
-                      placeholder="Image caption"
-                      value={image.caption}
-                      onChange={(e) => updateImage(index, 'caption', e.target.value)}
-                    />
-                  </Form.Item>
-                </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Caption</label>
+                            <Input
+                              name={`images[${index}].caption`}
+                              placeholder="Image caption"
+                              value={image.caption}
+                              onChange={(e) =>
+                                setFieldValue(`images[${index}].caption`, e.target.value)
+                              }
+                              onBlur={handleBlur}
+                            />
+                          </div>
+                        </div>
 
-                {/* Preview image if URL is provided */}
-                {image.url && (
-                  <div className="mt-2">
-                    <img
-                      src={image.url}
-                      alt={image.alt || 'Preview'}
-                      className="w-full h-32 object-cover rounded border"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                      onLoad={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'block';
-                      }}
-                    />
+                        {image.url && (
+                          <div className="mt-2">
+                            <img
+                              src={image.url}
+                              alt={image.alt || 'Preview'}
+                              className="w-full h-32 object-cover rounded border"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                              onLoad={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'block';
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+
+                  <div className="flex justify-center">
+                    <Button
+                      type="dashed"
+                      icon={<PlusOutlined />}
+                      onClick={() => push(defaultImage())}
+                      className="w-full"
+                    >
+                      Add Another Image
+                    </Button>
                   </div>
-                )}
-              </div>
-            </Card>
-          ))}
-
-          <div className="flex justify-center">
-            <Button type="dashed" icon={<PlusOutlined />} onClick={addImage} className="w-full">
-              Add Another Image
-            </Button>
-          </div>
-        </div>
-      </Form>
-    </Modal>
+                </div>
+              )}
+            </FieldArray>
+          </FormikForm>
+        </Modal>
+      )}
+    </Formik>
   );
 };
 

@@ -10,6 +10,7 @@ import SplitViewRenderer from './renderers/SplitViewRenderer';
 import SplitViewModal from './SplitViewModal';
 import GalleryEditModal from './GalleryEditModal';
 import VideoEditModal from './VideoEditModal';
+import { Header } from './renderers/Header';
 
 export const RenderWebPage = () => {
   const { website, currentPageId } = useWebsiteStore();
@@ -99,6 +100,8 @@ export const RenderWebPage = () => {
   return (
     <div className="w-full min-h-screen" style={{ backgroundColor: bg }}>
       <div className="mx-auto px-4 py-8" style={{ maxWidth: maxW }}>
+        <Header />
+        <br />
         {blocks.length === 0 ? (
           <div className="text-gray-500">This page has no blocks yet.</div>
         ) : (

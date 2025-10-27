@@ -7,15 +7,16 @@ import TextRenderer from './renderers/TextRenderer';
 import VideoRenderer from './renderers/VideoRenderer';
 import GalleryRenderer from './renderers/GalleryRenderer';
 import SplitViewRenderer from './renderers/SplitViewRenderer';
+import { Header } from './renderers/Header';
 
 type ViewMode = 'desktop' | 'mobile';
 
 const Preview: React.FC = () => {
-  const { website } = useWebsiteStore();
+  const { website, currentPageId } = useWebsiteStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('desktop');
 
-  const page: Page | null = website?.pages?.[0] || null;
+  const page: Page | null = website?.pages.find((p) => p.id === currentPageId) || null;
 
   if (!page) {
     return null;
@@ -49,6 +50,8 @@ const Preview: React.FC = () => {
           transition: 'max-width 0.3s ease',
         }}
       >
+        <Header />
+        <br />
         {blocks.length === 0 ? (
           <div className="text-gray-500 text-center">This page has no blocks yet.</div>
         ) : (
