@@ -1,10 +1,14 @@
 import { create } from 'zustand';
 import { Block, Page, Website } from '@/types/blocks';
+import { getStoreData, updateStoreData, upsertStoreData } from '@/lib/api-client';
 
 interface WebsiteStore {
   website: Website | null;
   currentPage: Page | null;
   currentPageId: string;
+  databaseId: number | null; // Track the database record ID
+  isLoading: boolean;
+  error: string | null;
 
   // Actions
   setWebsite: (website: Website) => void;
@@ -16,9 +20,11 @@ interface WebsiteStore {
   updateBlock: (pageId: string, blockId: string, updates: Partial<Block>) => void;
   deleteBlock: (pageId: string, blockId: string) => void;
   reorderBlocks: (pageId: string, blocks: Block[]) => void;
+  fetchAndUpdateStore: (pageId: number) => Promise<void>;
+  setDatabaseId: (id: number | null) => void;
 }
 
-export const useWebsiteStore = create<WebsiteStore>((set) => ({
+export const useWebsiteStore = create<WebsiteStore>((set, get) => ({
   website: {
     name: 'My Website',
     pages: [
@@ -42,6 +48,9 @@ export const useWebsiteStore = create<WebsiteStore>((set) => ({
     slug: 'home_slug',
   },
   currentPageId: 'home',
+  databaseId: 1,
+  isLoading: false,
+  error: null,
 
   setWebsite: (website) => set({ website }),
 
@@ -93,14 +102,23 @@ export const useWebsiteStore = create<WebsiteStore>((set) => ({
     });
     set((state) => {
       if (!state.website) return state;
+      const updatedWebsite = {
+        ...state.website,
+        pages: state.website.pages.map((page) =>
+          page.id === pageId ? { ...page, blocks: [...page.blocks, block] } : page
+        ),
+      };
+
+      // Silently upsert data to the backend
+      if (state.databaseId !== null) {
+        upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
+          console.error('Silent upsert failed for addBlock:', error);
+        });
+      }
+
       return {
         ...state,
-        website: {
-          ...state.website,
-          pages: state.website.pages.map((page) =>
-            page.id === pageId ? { ...page, blocks: [...page.blocks, block] } : page
-          ),
-        },
+        website: updatedWebsite,
       };
     });
   },
@@ -108,21 +126,30 @@ export const useWebsiteStore = create<WebsiteStore>((set) => ({
   updateBlock: (pageId, blockId, updates) =>
     set((state) => {
       if (!state.website) return state;
+      const updatedWebsite = {
+        ...state.website,
+        pages: state.website.pages.map((page) =>
+          page.id === pageId
+            ? {
+                ...page,
+                blocks: page.blocks.map((block) =>
+                  block.id === blockId ? ({ ...block, ...updates } as Block) : block
+                ),
+              }
+            : page
+        ),
+      };
+
+      // Silently upsert data to the backend
+      if (state.databaseId !== null) {
+        upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
+          console.error('Silent upsert failed for updateBlock:', error);
+        });
+      }
+
       return {
         ...state,
-        website: {
-          ...state.website,
-          pages: state.website.pages.map((page) =>
-            page.id === pageId
-              ? {
-                  ...page,
-                  blocks: page.blocks.map((block) =>
-                    block.id === blockId ? ({ ...block, ...updates } as Block) : block
-                  ),
-                }
-              : page
-          ),
-        },
+        website: updatedWebsite,
       };
     }),
 
@@ -146,33 +173,81 @@ export const useWebsiteStore = create<WebsiteStore>((set) => ({
   deleteBlock: (pageId, blockId) =>
     set((state) => {
       if (!state.website) return state;
+      const updatedWebsite = {
+        ...state.website,
+        pages: state.website.pages.map((page) =>
+          page.id === pageId
+            ? {
+                ...page,
+                blocks: page.blocks.filter((block) => block.id !== blockId),
+              }
+            : page
+        ),
+      };
+
+      // Silently upsert data to the backend
+      if (state.databaseId !== null) {
+        upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
+          console.error('Silent upsert failed for deleteBlock:', error);
+        });
+      }
+
       return {
         ...state,
-        website: {
-          ...state.website,
-          pages: state.website.pages.map((page) =>
-            page.id === pageId
-              ? {
-                  ...page,
-                  blocks: page.blocks.filter((block) => block.id !== blockId),
-                }
-              : page
-          ),
-        },
+        website: updatedWebsite,
       };
     }),
 
   reorderBlocks: (pageId, blocks) =>
     set((state) => {
       if (!state.website) return state;
+      const updatedWebsite = {
+        ...state.website,
+        pages: state.website.pages.map((page) => (page.id === pageId ? { ...page, blocks } : page)),
+      };
+
+      // Silently upsert data to the backend
+      if (state.databaseId !== null) {
+        upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
+          console.error('Silent upsert failed for reorderBlocks:', error);
+        });
+      }
+
       return {
         ...state,
-        website: {
-          ...state.website,
-          pages: state.website.pages.map((page) =>
-            page.id === pageId ? { ...page, blocks } : page
-          ),
-        },
+        website: updatedWebsite,
       };
     }),
+
+  setDatabaseId: (id) => set({ databaseId: id }),
+
+  fetchAndUpdateStore: async (pageId) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const data = await getStoreData(pageId);
+
+      if (data) {
+        set({
+          website: data,
+          databaseId: pageId,
+          currentPage:
+            data.pages.find((p) => p.id === get().currentPageId) || data.pages[0] || null,
+          isLoading: false,
+          error: null,
+        });
+      } else {
+        set({
+          isLoading: false,
+          error: 'No data found for the specified page ID',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching store data:', error);
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch data',
+      });
+    }
+  },
 }));

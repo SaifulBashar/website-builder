@@ -31,7 +31,7 @@ export default function Editor({
           [{ color: [] }, { background: [] }],
           [{ list: 'ordered' }, { list: 'bullet' }],
           [{ align: [] }],
-          ['link', 'image', 'video'],
+          ['link'],
           ['clean'],
         ],
       },

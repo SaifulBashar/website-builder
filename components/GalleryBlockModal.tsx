@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Modal, Upload, message, Input, InputNumber } from 'antd';
-import { uploadImage } from '@/lib/supabase';
 
 interface GalleryImage {
   id: string;

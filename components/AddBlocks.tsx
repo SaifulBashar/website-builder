@@ -65,9 +65,8 @@ export const AddBlocks = () => {
     hide();
   };
 
-  const handleModalOk = () => {
+  const handleModalOk = async () => {
     setIsModalOpen(false);
-    console.log('Editor content:', editorContent);
     const newBlock: TextBlock = {
       id: crypto.randomUUID(),
       type: 'text',
