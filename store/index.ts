@@ -70,26 +70,46 @@ export const useWebsiteStore = create<WebsiteStore>((set, get) => ({
         ...page,
         id: newPageId,
       };
+
+      const updatedWebsite = {
+        ...state.website,
+        pages: [...state.website.pages, newPage],
+      };
+
+      // Silently upsert data to the backend
+      if (state.databaseId !== null) {
+        upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
+          console.error('Silent upsert failed for addPage:', error);
+        });
+      }
+
       return {
         ...state,
-        website: {
-          ...state.website,
-          pages: [...state.website.pages, newPage],
-        },
+        website: updatedWebsite,
       };
     }),
 
   updatePage: (pageId, updates) =>
     set((state) => {
       if (!state.website) return state;
+
+      const updatedWebsite = {
+        ...state.website,
+        pages: state.website.pages.map((page) =>
+          page.id === pageId ? { ...page, ...updates } : page
+        ),
+      };
+
+      // Silently upsert data to the backend
+      if (state.databaseId !== null) {
+        upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
+          console.error('Silent upsert failed for updatePage:', error);
+        });
+      }
+
       return {
         ...state,
-        website: {
-          ...state.website,
-          pages: state.website.pages.map((page) =>
-            page.id === pageId ? { ...page, ...updates } : page
-          ),
-        },
+        website: updatedWebsite,
         currentPage:
           state.currentPageId === pageId
             ? { ...state.currentPage!, ...updates }
@@ -161,12 +181,22 @@ export const useWebsiteStore = create<WebsiteStore>((set, get) => ({
       const updatedPages = state.website.pages.filter((page) => page.id !== pageId);
       // If deleting the current page, switch to home
       const newCurrentPageId = state.currentPageId === pageId ? 'home' : state.currentPageId;
+
+      const updatedWebsite = {
+        ...state.website,
+        pages: updatedPages,
+      };
+
+      // Silently upsert data to the backend
+      if (state.databaseId !== null) {
+        upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
+          console.error('Silent upsert failed for deletePage:', error);
+        });
+      }
+
       return {
         ...state,
-        website: {
-          ...state.website,
-          pages: updatedPages,
-        },
+        website: updatedWebsite,
         currentPageId: newCurrentPageId,
         currentPage: updatedPages.find((p) => p.id === newCurrentPageId) || null,
       };
