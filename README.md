@@ -46,12 +46,7 @@ A modern, intuitive drag-and-drop website builder built with Next.js, React, and
 - **Tailwind CSS 3.4.14** - Utility-first CSS framework
 - **Ant Design 5.21.0** - Professional UI components
 - **Zustand 5.0.8** - Lightweight state management
-
-### Editor & UI
-
 - **Quill 2.0.3** - Rich text editor for content blocks
-- **Lucide React 0.547.0** - Beautiful icon library with arrow controls
-- **@dnd-kit** - Modern drag-and-drop functionality
 - **Formik 2.4.6** - Form management and validation
 
 ### Backend & Database
@@ -414,18 +409,6 @@ We welcome contributions! Please follow these guidelines:
 - [ ] Advanced animations and transitions
 - [ ] E-commerce integration
 - [ ] Performance analytics
-
-## 👥 Authors
-
-- **Saiful Bashar** - _Initial work_ - [@SaifulBashar](https://github.com/SaifulBashar)
-
-## 🙏 Acknowledgments
-
-- [Next.js](https://nextjs.org/) for the amazing React framework
-- [Ant Design](https://ant.design/) for beautiful UI components
-- [Quill.js](https://quilljs.com/) for the rich text editor
-- [Supabase](https://supabase.com/) for backend services
-- [Vercel](https://vercel.com/) for seamless deployment
 
 ---
 
