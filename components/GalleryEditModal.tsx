@@ -119,7 +119,66 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
                     >
                       <div className="grid grid-cols-1 gap-3">
                         <div>
-                          <label className="block text-sm font-medium mb-1">Image URL</label>
+                          <label className="block text-sm font-medium mb-1">
+                            Image URL
+                            <div
+                              style={{
+                                fontSize: '12px',
+                                fontWeight: 'normal',
+                                color: '#666',
+                                marginTop: '4px',
+                              }}
+                            >
+                              Try:{' '}
+                              <a
+                                onClick={() =>
+                                  setFieldValue(
+                                    `images[${index}].url`,
+                                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                                  )
+                                }
+                                style={{
+                                  cursor: 'pointer',
+                                  color: '#1890ff',
+                                  textDecoration: 'underline',
+                                }}
+                              >
+                                Nature
+                              </a>
+                              {' | '}
+                              <a
+                                onClick={() =>
+                                  setFieldValue(
+                                    `images[${index}].url`,
+                                    'https://images.unsplash.com/photo-1519904981063-b0cf448d479e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                                  )
+                                }
+                                style={{
+                                  cursor: 'pointer',
+                                  color: '#1890ff',
+                                  textDecoration: 'underline',
+                                }}
+                              >
+                                Architecture
+                              </a>
+                              {' | '}
+                              <a
+                                onClick={() =>
+                                  setFieldValue(
+                                    `images[${index}].url`,
+                                    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                                  )
+                                }
+                                style={{
+                                  cursor: 'pointer',
+                                  color: '#1890ff',
+                                  textDecoration: 'underline',
+                                }}
+                              >
+                                Landscape
+                              </a>
+                            </div>
+                          </label>
                           <Input
                             name={`images[${index}].url`}
                             placeholder="Enter image URL"

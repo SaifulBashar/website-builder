@@ -119,7 +119,56 @@ const SplitViewModal: React.FC<SplitViewModalProps> = ({
                 return (
                   <Form.Item
                     name="leftContent"
-                    label={leftType === 'image' ? 'Image URL' : 'Text Content'}
+                    label={
+                      leftType === 'image' ? (
+                        <div>
+                          Image URL
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: 'normal',
+                              color: '#666',
+                              marginTop: '4px',
+                            }}
+                          >
+                            Try:{' '}
+                            <a
+                              onClick={() =>
+                                form.setFieldsValue({
+                                  leftContent:
+                                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                                })
+                              }
+                              style={{
+                                cursor: 'pointer',
+                                color: '#1890ff',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              Mountain
+                            </a>
+                            {' | '}
+                            <a
+                              onClick={() =>
+                                form.setFieldsValue({
+                                  leftContent:
+                                    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                                })
+                              }
+                              style={{
+                                cursor: 'pointer',
+                                color: '#1890ff',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              Forest
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        'Text Content'
+                      )
+                    }
                     rules={[{ required: true, message: 'Please enter content' }]}
                   >
                     {leftType === 'image' ? (
@@ -164,7 +213,56 @@ const SplitViewModal: React.FC<SplitViewModalProps> = ({
                 return (
                   <Form.Item
                     name="rightContent"
-                    label={rightType === 'image' ? 'Image URL' : 'Text Content'}
+                    label={
+                      rightType === 'image' ? (
+                        <div>
+                          Image URL
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: 'normal',
+                              color: '#666',
+                              marginTop: '4px',
+                            }}
+                          >
+                            Try:{' '}
+                            <a
+                              onClick={() =>
+                                form.setFieldsValue({
+                                  rightContent:
+                                    'https://images.unsplash.com/photo-1519904981063-b0cf448d479e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                                })
+                              }
+                              style={{
+                                cursor: 'pointer',
+                                color: '#1890ff',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              Ocean
+                            </a>
+                            {' | '}
+                            <a
+                              onClick={() =>
+                                form.setFieldsValue({
+                                  rightContent:
+                                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                                })
+                              }
+                              style={{
+                                cursor: 'pointer',
+                                color: '#1890ff',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              City
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        'Text Content'
+                      )
+                    }
                     rules={[{ required: true, message: 'Please enter content' }]}
                   >
                     {rightType === 'image' ? (

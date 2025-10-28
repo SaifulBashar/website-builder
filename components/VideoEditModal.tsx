@@ -70,7 +70,26 @@ const VideoEditModal: React.FC<VideoEditModalProps> = ({
         }}
       >
         <Form.Item
-          label="Video URL"
+          label={
+            <div>
+              Video URL
+              <div
+                style={{ fontSize: '12px', fontWeight: 'normal', color: '#666', marginTop: '4px' }}
+              >
+                Try:{' '}
+                <a
+                  onClick={() =>
+                    form.setFieldsValue({
+                      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                    })
+                  }
+                  style={{ cursor: 'pointer', color: '#1890ff', textDecoration: 'underline' }}
+                >
+                  Sample Video
+                </a>
+              </div>
+            </div>
+          }
           name="url"
           rules={[
             { required: true, message: 'Please enter a video URL' },
