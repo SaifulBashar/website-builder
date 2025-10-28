@@ -64,7 +64,7 @@ const SplitViewModal: React.FC<SplitViewModalProps> = ({
       setLeftEditorContent('');
       setRightEditorContent('');
     }
-  }, [editingBlock, open, form]);
+  }, [editingBlock, open]);
 
   const handleOk = () => {
     const formValues = form.getFieldsValue();
@@ -127,7 +127,11 @@ const SplitViewModal: React.FC<SplitViewModalProps> = ({
                     ) : (
                       <Editor
                         key={`left-editor-${open}`}
-                        defaultValue={leftEditorContent}
+                        defaultValue={
+                          editingBlock?.leftContent.type === 'text'
+                            ? editingBlock.leftContent.content
+                            : ''
+                        }
                         onChange={(content) => {
                           setLeftEditorContent(content);
                           form.setFieldValue('leftContent', content);
@@ -168,7 +172,11 @@ const SplitViewModal: React.FC<SplitViewModalProps> = ({
                     ) : (
                       <Editor
                         key={`right-editor-${open}`}
-                        defaultValue={rightEditorContent}
+                        defaultValue={
+                          editingBlock?.rightContent.type === 'text'
+                            ? editingBlock.rightContent.content
+                            : ''
+                        }
                         onChange={(content) => {
                           setRightEditorContent(content);
                           form.setFieldValue('rightContent', content);

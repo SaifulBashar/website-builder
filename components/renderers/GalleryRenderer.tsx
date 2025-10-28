@@ -1,15 +1,29 @@
 import React from 'react';
 import { GalleryBlock } from '@/types/blocks';
 import { Carousel, Button } from 'antd';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 
 interface Props {
   block: GalleryBlock;
   onRemove?: () => void;
   onEdit?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   isPreview?: boolean;
 }
 
-const GalleryRenderer: React.FC<Props> = ({ block, onRemove, onEdit, isPreview = false }) => {
+const GalleryRenderer: React.FC<Props> = ({
+  block,
+  onRemove,
+  onEdit,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = true,
+  canMoveDown = true,
+  isPreview = false,
+}) => {
   return (
     <div>
       <Carousel dots arrows className="w-full">
@@ -25,6 +39,22 @@ const GalleryRenderer: React.FC<Props> = ({ block, onRemove, onEdit, isPreview =
       </Carousel>
       {!isPreview && onRemove && onEdit && (
         <div className="p-4 flex items-center justify-center gap-4">
+          {onMoveUp && (
+            <Button
+              onClick={onMoveUp}
+              disabled={!canMoveUp}
+              icon={<ChevronUp size={16} />}
+              title="Move Up"
+            />
+          )}
+          {onMoveDown && (
+            <Button
+              onClick={onMoveDown}
+              disabled={!canMoveDown}
+              icon={<ChevronDown size={16} />}
+              title="Move Down"
+            />
+          )}
           <Button onClick={onRemove}>Remove</Button>
           <Button onClick={onEdit}>Edit</Button>
         </div>

@@ -16,6 +16,8 @@ export const RenderWebPage = () => {
   const { website, currentPageId } = useWebsiteStore();
   const deleteBlock = useWebsiteStore((state) => state.deleteBlock);
   const updateBlock = useWebsiteStore((state) => state.updateBlock);
+  const moveBlockUp = useWebsiteStore((state) => state.moveBlockUp);
+  const moveBlockDown = useWebsiteStore((state) => state.moveBlockDown);
 
   // Editor modal state
   const [editOpen, setEditOpen] = useState(false);
@@ -45,13 +47,24 @@ export const RenderWebPage = () => {
 
   const blocks = [...(page.blocks || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  const renderBlock = (block: Block) => {
+  const renderBlock = (block: Block, index: number) => {
+    const canMoveUp = index > 0;
+    const canMoveDown = index < blocks.length - 1;
+
+    const commonProps = {
+      onRemove: () => deleteBlock(page.id, block.id),
+      onMoveUp: () => moveBlockUp(page.id, block.id),
+      onMoveDown: () => moveBlockDown(page.id, block.id),
+      canMoveUp,
+      canMoveDown,
+    };
+
     switch (block.type) {
       case 'text':
         return (
           <TextRenderer
             block={block}
-            onRemove={() => deleteBlock(page.id, block.id)}
+            {...commonProps}
             onEdit={() => {
               setEditingBlockId(block.id);
               setEditContent(block.content);
@@ -63,7 +76,7 @@ export const RenderWebPage = () => {
         return (
           <VideoRenderer
             block={block}
-            onRemove={() => deleteBlock(page.id, block.id)}
+            {...commonProps}
             onEdit={() => {
               setEditingVideoBlock(block);
               setVideoEditOpen(true);
@@ -75,7 +88,7 @@ export const RenderWebPage = () => {
         return (
           <GalleryRenderer
             block={block}
-            onRemove={() => deleteBlock(page.id, block.id)}
+            {...commonProps}
             onEdit={() => {
               setEditingGalleryBlock(block);
               setGalleryEditOpen(true);
@@ -86,7 +99,7 @@ export const RenderWebPage = () => {
         return (
           <SplitViewRenderer
             block={block}
-            onRemove={() => deleteBlock(page.id, block.id)}
+            {...commonProps}
             onEdit={() => {
               setEditingSplitBlock(block);
               setSplitEditOpen(true);
@@ -97,6 +110,7 @@ export const RenderWebPage = () => {
         return null;
     }
   };
+
   return (
     <div className="w-full min-h-screen" style={{ backgroundColor: bg }}>
       <div className="mx-auto px-4 py-8" style={{ maxWidth: maxW }}>
@@ -106,8 +120,8 @@ export const RenderWebPage = () => {
           <div className="text-gray-500">This page has no blocks yet.</div>
         ) : (
           <div className="flex flex-col gap-8">
-            {blocks.map((block) => (
-              <section key={block.id}>{renderBlock(block)}</section>
+            {blocks.map((block, index) => (
+              <section key={block.id}>{renderBlock(block, index)}</section>
             ))}
           </div>
         )}
@@ -128,13 +142,25 @@ export const RenderWebPage = () => {
         onCancel={() => setEditOpen(false)}
         width={800}
       >
-        <Editor defaultValue={editContent} onChange={setEditContent} />
+        <Editor
+          defaultValue={
+            blocks.find((b) => b.id === editingBlockId && b.type === 'text')?.type === 'text'
+              ? (blocks.find((b) => b.id === editingBlockId) as any).content
+              : ''
+          }
+          onChange={setEditContent}
+        />
       </Modal>
 
       <SplitViewModal
         open={splitEditOpen}
         title="Edit Split-View Block"
-        editingBlock={editingSplitBlock}
+        editingBlock={
+          blocks.find((b) => b.id === editingSplitBlock?.id && b.type === 'split-view')?.type ===
+          'split-view'
+            ? (blocks.find((b) => b.id === editingSplitBlock?.id) as any)
+            : null
+        }
         onOk={(values) => {
           if (!page || !editingSplitBlock) return;
 

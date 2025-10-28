@@ -1,15 +1,29 @@
 import React from 'react';
 import { SplitViewBlock } from '@/types/blocks';
 import { Button } from 'antd';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 
 interface Props {
   block: SplitViewBlock;
   onRemove?: () => void;
   onEdit?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   isPreview?: boolean;
 }
 
-const SplitViewRenderer: React.FC<Props> = ({ block, onRemove, onEdit, isPreview = false }) => {
+const SplitViewRenderer: React.FC<Props> = ({
+  block,
+  onRemove,
+  onEdit,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = true,
+  canMoveDown = true,
+  isPreview = false,
+}) => {
   const ratio = block.ratio ?? '50-50';
   const [left, right] = ratio.split('-').map((v) => Number(v));
   const align = block.verticalAlign ?? 'top';
@@ -35,6 +49,22 @@ const SplitViewRenderer: React.FC<Props> = ({ block, onRemove, onEdit, isPreview
       </div>
       {!isPreview && onRemove && onEdit && (
         <div className="p-4 flex items-center justify-center gap-4">
+          {onMoveUp && (
+            <Button
+              onClick={onMoveUp}
+              disabled={!canMoveUp}
+              icon={<ChevronUp size={16} />}
+              title="Move Up"
+            />
+          )}
+          {onMoveDown && (
+            <Button
+              onClick={onMoveDown}
+              disabled={!canMoveDown}
+              icon={<ChevronDown size={16} />}
+              title="Move Down"
+            />
+          )}
           <Button onClick={onRemove}>Remove</Button>
           <Button onClick={onEdit}>Edit</Button>
         </div>

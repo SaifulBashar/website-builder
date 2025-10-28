@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import Quill from 'quill';
-import 'quill/dist/quill.snow.css';
 
 interface EditorProps {
   defaultValue?: string;

@@ -20,6 +20,8 @@ interface WebsiteStore {
   updateBlock: (pageId: string, blockId: string, updates: Partial<Block>) => void;
   deleteBlock: (pageId: string, blockId: string) => void;
   reorderBlocks: (pageId: string, blocks: Block[]) => void;
+  moveBlockUp: (pageId: string, blockId: string) => void;
+  moveBlockDown: (pageId: string, blockId: string) => void;
   fetchAndUpdateStore: (pageId: number) => Promise<void>;
   setDatabaseId: (id: number | null) => void;
 }
@@ -210,6 +212,98 @@ export const useWebsiteStore = create<WebsiteStore>((set, get) => ({
       if (state.databaseId !== null) {
         upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
           console.error('Silent upsert failed for reorderBlocks:', error);
+        });
+      }
+
+      return {
+        ...state,
+        website: updatedWebsite,
+      };
+    }),
+
+  moveBlockUp: (pageId, blockId) =>
+    set((state) => {
+      if (!state.website) return state;
+
+      const page = state.website.pages.find((p) => p.id === pageId);
+      if (!page) return state;
+
+      const sortedBlocks = [...page.blocks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const blockIndex = sortedBlocks.findIndex((block) => block.id === blockId);
+
+      if (blockIndex <= 0) return state; // Already at the top or not found
+
+      // Swap with the block above
+      const newBlocks = [...sortedBlocks];
+      [newBlocks[blockIndex - 1], newBlocks[blockIndex]] = [
+        newBlocks[blockIndex],
+        newBlocks[blockIndex - 1],
+      ];
+
+      // Update order values
+      const updatedBlocks = newBlocks.map((block, index) => ({
+        ...block,
+        order: index,
+        updatedAt: new Date().toISOString(),
+      }));
+
+      const updatedWebsite = {
+        ...state.website,
+        pages: state.website.pages.map((p) =>
+          p.id === pageId ? { ...p, blocks: updatedBlocks } : p
+        ),
+      };
+
+      // Silently upsert data to the backend
+      if (state.databaseId !== null) {
+        upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
+          console.error('Silent upsert failed for moveBlockUp:', error);
+        });
+      }
+
+      return {
+        ...state,
+        website: updatedWebsite,
+      };
+    }),
+
+  moveBlockDown: (pageId, blockId) =>
+    set((state) => {
+      if (!state.website) return state;
+
+      const page = state.website.pages.find((p) => p.id === pageId);
+      if (!page) return state;
+
+      const sortedBlocks = [...page.blocks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const blockIndex = sortedBlocks.findIndex((block) => block.id === blockId);
+
+      if (blockIndex >= sortedBlocks.length - 1 || blockIndex === -1) return state; // Already at the bottom or not found
+
+      // Swap with the block below
+      const newBlocks = [...sortedBlocks];
+      [newBlocks[blockIndex], newBlocks[blockIndex + 1]] = [
+        newBlocks[blockIndex + 1],
+        newBlocks[blockIndex],
+      ];
+
+      // Update order values
+      const updatedBlocks = newBlocks.map((block, index) => ({
+        ...block,
+        order: index,
+        updatedAt: new Date().toISOString(),
+      }));
+
+      const updatedWebsite = {
+        ...state.website,
+        pages: state.website.pages.map((p) =>
+          p.id === pageId ? { ...p, blocks: updatedBlocks } : p
+        ),
+      };
+
+      // Silently upsert data to the backend
+      if (state.databaseId !== null) {
+        upsertStoreData(state.databaseId, updatedWebsite).catch((error) => {
+          console.error('Silent upsert failed for moveBlockDown:', error);
         });
       }
 

@@ -16,7 +16,6 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.76.1",
     "antd": "^5.21.0",
-    "firebase": "^12.4.0",
     "formik": "^2.4.6",
     "lucide-react": "^0.547.0",
     "next": "^15.0.0",
